@@ -114,14 +114,16 @@ export function renderHtml(ogp: OgpMeta, redirectTo: string): string {
     })
     .join("\n");
 
+  // Preview bots (Chatwork etc.) follow <meta http-equiv="refresh"> and
+  // <link rel="canonical"> back to the upstream page, which defeats the whole
+  // point of wrapping. Send only og:* and use JS to bounce real visitors.
   return `<!doctype html>
 <html lang="ja">
   <head>
     <meta charset="utf-8">
     <title>${escapeHtml(title)}</title>
 ${metaTags}
-    <meta http-equiv="refresh" content="0; url=${escapeAttr(redirectTo)}">
-    <link rel="canonical" href="${escapeAttr(redirectTo)}">
+    <script>location.replace(${JSON.stringify(redirectTo)});</script>
   </head>
   <body>
     <p>Redirecting to <a href="${escapeAttr(redirectTo)}">${escapeHtml(redirectTo)}</a>…</p>
