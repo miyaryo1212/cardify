@@ -2,14 +2,13 @@ name = "cardify"
 main = "src/index.ts"
 compatibility_date = "2025-05-01"
 
-# Bind to cardify.miyaryo1212.com via Cloudflare dashboard or routes below.
-# routes = [
-#   { pattern = "cardify.miyaryo1212.com/*", zone_name = "miyaryo1212.com" }
-# ]
+routes = [
+  { pattern = "cardify.miyaryo1212.com", custom_domain = true }
+]
 
 [[kv_namespaces]]
 binding = "OGP_CACHE"
-id = "REPLACE_WITH_KV_ID"
+id = "e429c83bf6b64d97b54f52a5877af7de"
 
 [[r2_buckets]]
 binding = "OGP_IMAGES"
