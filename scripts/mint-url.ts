@@ -1,8 +1,8 @@
 // Mint a signed register URL locally.
 //
 // Usage:
-//   HMAC_SECRET=xxx BASE=https://ogp.miyaryo1212.com \
-//     npm run mint -- https://twitter.com/...
+//   HMAC_SECRET=xxx BASE=https://cardify.miyaryo1212.com \
+//     npm run mint -- https://example.com/article
 //
 // Outputs the curl command to register the URL and the resulting wrapper URL.
 
@@ -23,7 +23,7 @@ function main() {
     console.error("HMAC_SECRET env var required");
     process.exit(1);
   }
-  const base = process.env["BASE"] ?? "https://ogp.miyaryo1212.com";
+  const base = process.env["BASE"] ?? "https://cardify.miyaryo1212.com";
 
   const sig = sign(target, secret);
   const registerUrl =

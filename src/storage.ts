@@ -40,7 +40,7 @@ export async function mirrorImage(
     const res = await fetch(imageUrl, {
       headers: {
         "user-agent":
-          "Mozilla/5.0 (compatible; CardifyBot/0.1; +https://ogp.miyaryo1212.com)",
+          "Mozilla/5.0 (compatible; CardifyBot/0.1; +https://cardify.miyaryo1212.com)",
       },
     });
     if (!res.ok || !res.body) return null;

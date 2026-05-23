@@ -3,32 +3,42 @@ export type OgpMeta = {
   originalUrl: string;
   // Captured at fetch time
   fetchedAt: string;
-  // Arbitrary meta key → content. Keys preserved as-is (e.g. "og:title").
+  // Final, render-ready meta map. og:* / twitter:* fields are populated from
+  // the upstream page, with fallbacks synthesised from <title> and
+  // <meta name="description"> when the source has no OGP of its own.
   meta: Record<string, string>;
-  // Page <title> as a fallback
-  title?: string;
 };
 
-const ALLOWED_PREFIXES = ["og:", "twitter:", "article:", "fb:"];
+const OGP_PREFIXES = ["og:", "twitter:", "article:", "fb:"];
 
-function isAllowedMetaName(name: string): boolean {
+function isOgpKey(name: string): boolean {
   const lower = name.toLowerCase();
-  return ALLOWED_PREFIXES.some((p) => lower.startsWith(p));
+  return OGP_PREFIXES.some((p) => lower.startsWith(p));
 }
 
 class MetaHandler {
-  constructor(private out: Record<string, string>) {}
+  constructor(
+    private ogp: Record<string, string>,
+    private extras: { description?: string },
+  ) {}
 
   element(el: Element) {
     const property = el.getAttribute("property");
     const name = el.getAttribute("name");
     const content = el.getAttribute("content");
     if (!content) return;
+
     const key = property ?? name;
     if (!key) return;
-    if (!isAllowedMetaName(key)) return;
-    // First write wins; OGP spec says first occurrence is canonical.
-    if (this.out[key] === undefined) this.out[key] = content;
+
+    if (isOgpKey(key)) {
+      // First write wins; OGP spec says first occurrence is canonical.
+      if (this.ogp[key] === undefined) this.ogp[key] = content;
+      return;
+    }
+    if (name?.toLowerCase() === "description" && !this.extras.description) {
+      this.extras.description = content;
+    }
   }
 }
 
@@ -44,7 +54,7 @@ export async function fetchOgp(url: string): Promise<OgpMeta> {
     redirect: "follow",
     headers: {
       "user-agent":
-        "Mozilla/5.0 (compatible; CardifyBot/0.1; +https://ogp.miyaryo1212.com)",
+        "Mozilla/5.0 (compatible; CardifyBot/0.1; +https://cardify.miyaryo1212.com)",
       accept: "text/html,application/xhtml+xml",
     },
   });
@@ -52,21 +62,32 @@ export async function fetchOgp(url: string): Promise<OgpMeta> {
     throw new Error(`upstream ${res.status} for ${url}`);
   }
   const meta: Record<string, string> = {};
+  const extras: { description?: string } = {};
   const titleHandler = new TitleHandler();
 
   const rewriter = new HTMLRewriter()
-    .on("meta", new MetaHandler(meta))
+    .on("meta", new MetaHandler(meta, extras))
     .on("title", titleHandler);
 
-  // Drain the response through the rewriter.
   await new Response(rewriter.transform(res).body).arrayBuffer();
 
-  return {
-    originalUrl: url,
-    fetchedAt: new Date().toISOString(),
-    meta,
-    title: titleHandler.buffer.trim() || undefined,
-  };
+  const pageTitle = titleHandler.buffer.trim();
+  const hostname = new URL(url).hostname;
+
+  // Synthesise OGP from <title>/<meta description> for pages that don't
+  // ship their own. og:image is intentionally left empty — better no image
+  // than a wrong one (e.g. favicon).
+  if (!meta["og:title"]) {
+    meta["og:title"] = pageTitle || hostname;
+  }
+  if (!meta["og:description"] && extras.description) {
+    meta["og:description"] = extras.description;
+  }
+  if (!meta["og:url"]) meta["og:url"] = url;
+  if (!meta["og:site_name"]) meta["og:site_name"] = hostname;
+  if (!meta["og:type"]) meta["og:type"] = "website";
+
+  return { originalUrl: url, fetchedAt: new Date().toISOString(), meta };
 }
 
 function escapeAttr(s: string): string {
@@ -85,8 +106,7 @@ function escapeHtml(s: string): string {
 }
 
 export function renderHtml(ogp: OgpMeta, redirectTo: string): string {
-  const title =
-    ogp.meta["og:title"] ?? ogp.meta["twitter:title"] ?? ogp.title ?? redirectTo;
+  const title = ogp.meta["og:title"] ?? redirectTo;
   const metaTags = Object.entries(ogp.meta)
     .map(([k, v]) => {
       const attr = k.startsWith("twitter:") ? "name" : "property";

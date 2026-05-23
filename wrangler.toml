@@ -2,9 +2,9 @@ name = "cardify"
 main = "src/index.ts"
 compatibility_date = "2025-05-01"
 
-# Bind to ogp.miyaryo1212.com via Cloudflare dashboard or routes below.
+# Bind to cardify.miyaryo1212.com via Cloudflare dashboard or routes below.
 # routes = [
-#   { pattern = "ogp.miyaryo1212.com/*", zone_name = "miyaryo1212.com" }
+#   { pattern = "cardify.miyaryo1212.com/*", zone_name = "miyaryo1212.com" }
 # ]
 
 [[kv_namespaces]]
@@ -18,7 +18,7 @@ bucket_name = "cardify-ogp-images"
 # Public base URL used when rebuilding image URLs served from R2.
 # Set to the R2 public bucket URL or a custom domain in front of the bucket.
 [vars]
-PUBLIC_IMAGE_BASE = "https://images.ogp.miyaryo1212.com"
+PUBLIC_IMAGE_BASE = "https://images.cardify.miyaryo1212.com"
 
 # Secrets — set via `wrangler secret put HMAC_SECRET`
 # HMAC_SECRET = "..."
