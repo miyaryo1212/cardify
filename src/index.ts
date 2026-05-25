@@ -1,3 +1,4 @@
+import { handleMint } from "./mint";
 import { generatePlaceholder } from "./placeholder";
 import { handleRegister } from "./register";
 import { handleView } from "./view";
@@ -26,6 +27,7 @@ export default {
     const url = new URL(req.url);
     if (url.pathname === "/register") return handleRegister(req, env, url);
     if (url.pathname === "/placeholder.svg") return handlePlaceholder(url);
+    if (url.pathname === "/mint") return handleMint();
     if (url.pathname === "/") return handleView(req, env, url);
     return new Response("not found", { status: 404 });
   },
